@@ -16,6 +16,13 @@ public class WalletStore {
   // MARK: -
   
   private var cancellable: AnyCancellable?
+  let keyringService: BraveWalletKeyringService
+  let rpcService: BraveWalletJsonRpcService
+  let walletService: BraveWalletBraveWalletService
+  let assetRatioService: BraveWalletAssetRatioService
+  let swapService: BraveWalletSwapService
+  let blockchainRegistry: BraveWalletBlockchainRegistry
+  let txService: BraveWalletEthTxService
   
   public init(
     keyringService: BraveWalletKeyringService,
@@ -26,16 +33,25 @@ public class WalletStore {
     blockchainRegistry: BraveWalletBlockchainRegistry,
     txService: BraveWalletEthTxService
   ) {
+    self.keyringService = keyringService
+    self.rpcService = rpcService
+    self.walletService = walletService
+    self.assetRatioService = assetRatioService
+    self.swapService = swapService
+    self.blockchainRegistry = blockchainRegistry
+    self.txService = txService
+    
     self.keyringStore = .init(keyringService: keyringService)
-    self.setUp(
-      keyringService: keyringService,
-      rpcService: rpcService,
-      walletService: walletService,
-      assetRatioService: assetRatioService,
-      swapService: swapService,
-      blockchainRegistry: blockchainRegistry,
-      txService: txService
-    )
+    
+//    self.setUp(
+//      keyringService: keyringService,
+//      rpcService: rpcService,
+//      walletService: walletService,
+//      assetRatioService: assetRatioService,
+//      swapService: swapService,
+//      blockchainRegistry: blockchainRegistry,
+//      txService: txService
+//    )
   }
   
   private func setUp(

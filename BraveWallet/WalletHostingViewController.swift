@@ -17,20 +17,49 @@ public protocol BraveWalletDelegate: AnyObject {
   func openWalletURL(_ url: URL)
 }
 
+import ComposableArchitecture
+
 /// The initial wallet controller to present when the user wants to view their wallet
-public class WalletHostingViewController: UIHostingController<CryptoView> {
+public class WalletHostingViewController: UIHostingController<CryptoView2> {
   public weak var delegate: BraveWalletDelegate?
   private var cancellable: AnyCancellable?
+  private let store: Store<WalletState, WalletAction>
   
   public init(walletStore: WalletStore) {
     gesture = WalletInteractionGestureRecognizer(
       keyringStore: walletStore.keyringStore
     )
-    super.init(
-      rootView: CryptoView(
-        walletStore: walletStore,
-        keyringStore: walletStore.keyringStore
+    store = .init(
+      initialState: .initial,
+      reducer: walletReducer,
+      environment: .init(
+        keyringService: walletStore.keyringService,
+        keyringObserver:
+          walletStore.keyringService.observer,
+        rpcService: walletStore.rpcService,
+        rpcServiceObserver:
+          walletStore.rpcService.observer,
+        walletService: walletStore.walletService,
+        assetRatioService:
+          walletStore.assetRatioService,
+        swapController: walletStore.swapService,
+        tokenRegistry: walletStore.blockchainRegistry,
+        transactionService: walletStore.txService,
+        transactionObserver:
+          walletStore.txService.observer,
+        walletKeychain: .init(
+          savePassword: { _ in return .success(()) },
+          loadPassword: { .success("password") },
+          isPasswordSaved: { false }
+        )
       )
+    )
+    super.init(
+//      rootView: CryptoView(
+//        walletStore: walletStore,
+//        keyringStore: walletStore.keyringStore
+//      )
+      rootView: CryptoView2(store: store)
     )
     rootView.dismissAction = { [unowned self] in
       self.dismiss(animated: true)

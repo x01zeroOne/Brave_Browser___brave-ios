@@ -7,6 +7,19 @@ import Foundation
 import BraveCore
 
 extension BraveWalletJsonRpcService {
+#if swift(>=5.5) && canImport(_Concurrency)
+  @MainActor func balance(
+    for token: BraveWallet.BlockchainToken,
+    in account: BraveWallet.AccountInfo
+  ) async -> Double? {
+    await withCheckedContinuation { continuation in
+      balance(for: token, in: account, completion: { result in
+        continuation.resume(returning: result)
+      })
+    }
+  }
+#endif
+  
   /// Obtain the decimal balance of an `BlockchainToken` for a given account
   ///
   /// If the call fails for some reason or the resulting wei cannot be converted,
