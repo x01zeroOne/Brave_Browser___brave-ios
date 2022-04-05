@@ -44,11 +44,14 @@ class BrowserNavigationHelper {
   }
 
   func openBookmarks() {
-    guard let bvc = bvc else { return }
+    guard let bvc = bvc else {
+      return
+    }
     let vc = BookmarksViewController(
       folder: bvc.bookmarkManager.lastVisitedFolder(),
       bookmarkManager: bvc.bookmarkManager,
-      isPrivateBrowsing: PrivateBrowsingManager.shared.isPrivateBrowsing)
+      isPrivateBrowsing: PrivateBrowsingManager.shared.isPrivateBrowsing
+    )
     vc.toolbarUrlActionsDelegate = bvc
 
     open(vc, doneButton: DoneButton(style: .done, position: .right))
@@ -60,9 +63,11 @@ class BrowserNavigationHelper {
 
   func openAddBookmark() {
     guard let bvc = bvc,
-      let tab = bvc.tabManager.selectedTab,
-      let url = tab.url
-    else { return }
+          let tab = bvc.tabManager.selectedTab,
+          let url = tab.url
+    else {
+      return
+    }
 
     let bookmarkUrl = url.decodeReaderModeURL ?? url
 
@@ -71,37 +76,45 @@ class BrowserNavigationHelper {
     let vc = AddEditBookmarkTableViewController(bookmarkManager: bvc.bookmarkManager, mode: mode)
 
     open(vc, doneButton: DoneButton(style: .cancel, position: .left))
-
   }
 
   func openHistory() {
-    guard let bvc = bvc else { return }
+    guard let bvc = bvc else {
+      return
+    }
     let vc = HistoryViewController(
       isPrivateBrowsing: PrivateBrowsingManager.shared.isPrivateBrowsing,
       historyAPI: bvc.braveCore.historyAPI,
-      tabManager: bvc.tabManager)
+      tabManager: bvc.tabManager
+    )
     vc.toolbarUrlActionsDelegate = bvc
 
     open(vc, doneButton: DoneButton(style: .done, position: .right))
   }
 
   func openSettings() {
-    guard let bvc = bvc else { return }
+    guard let bvc = bvc else {
+      return
+    }
     let vc = SettingsViewController(
       profile: bvc.profile,
       tabManager: bvc.tabManager,
       feedDataSource: bvc.feedDataSource,
       rewards: bvc.rewards,
       windowProtection: bvc.windowProtection,
-      braveCore: bvc.braveCore)
+      braveCore: bvc.braveCore
+    )
     vc.settingsDelegate = bvc
     open(
       vc, doneButton: DoneButton(style: .done, position: .right),
-      allowSwipeToDismiss: false)
+      allowSwipeToDismiss: false
+    )
   }
 
   func openShareSheet() {
-    guard let bvc = bvc else { return }
+    guard let bvc = bvc else {
+      return
+    }
     dismissView()
 
     func share(url: URL) {
@@ -114,7 +127,9 @@ class BrowserNavigationHelper {
       )
     }
 
-    guard let tab = bvc.tabManager.selectedTab, let url = tab.url else { return }
+    guard let tab = bvc.tabManager.selectedTab, let url = tab.url else {
+      return
+    }
 
     if let temporaryDocument = tab.temporaryDocument {
       temporaryDocument.getURL().uponQueue(
@@ -127,7 +142,8 @@ class BrowserNavigationHelper {
           } else {
             share(url: url)
           }
-        })
+        }
+      )
     } else if url.isReaderModeURL, let readerSourceURL = url.decodeReaderModeURL {
       // We want to decode the underlying url that generated the reader mode file and share that instead
       // This way we avoid sharing a url of a local file
@@ -143,7 +159,9 @@ class BrowserNavigationHelper {
   }
 
   @objc private func dismissView() {
-    guard let bvc = bvc else { return }
+    guard let bvc = bvc else {
+      return
+    }
     bvc.presentedViewController?.dismiss(animated: true)
   }
 }

@@ -14,9 +14,8 @@ protocol TabTrayDelegate: AnyObject {
 }
 
 class TabTrayController: LoadingViewController {
-
   var tabTrayView: View {
-    return view as! View  // swiftlint:disable:this force_cast
+    view as! View // swiftlint:disable:this force_cast
   }
 
   override func loadView() {
@@ -38,7 +37,8 @@ class TabTrayController: LoadingViewController {
       collectionView: tabTrayView.collectionView,
       cellProvider: { [weak self] collectionView, indexPath, tab -> UICollectionViewCell? in
         self?.cellProvider(collectionView: collectionView, indexPath: indexPath, tab: tab)
-      })
+      }
+    )
 
   private(set) var privateMode: Bool = false {
     didSet {
@@ -136,10 +136,12 @@ class TabTrayController: LoadingViewController {
     super.viewDidLayoutSubviews()
 
     // When user opens the tray for the first time, we scroll the collection view to selected tab.
-    if initialScrollCompleted { return }
+    if initialScrollCompleted {
+      return
+    }
 
     if let selectedTab = tabManager.selectedTab,
-      let selectedIndexPath = dataSource.indexPath(for: selectedTab) {
+       let selectedIndexPath = dataSource.indexPath(for: selectedTab) {
       DispatchQueue.main.async {
         self.tabTrayView.collectionView.scrollToItem(at: selectedIndexPath, at: .centeredVertically, animated: false)
       }
@@ -183,11 +185,14 @@ class TabTrayController: LoadingViewController {
   ) -> UICollectionViewCell? {
     guard
       let cell =
-        collectionView
+      collectionView
         .dequeueReusableCell(
           withReuseIdentifier: TabCell.identifier,
-          for: indexPath) as? TabCell
-    else { return UICollectionViewCell() }
+          for: indexPath
+        ) as? TabCell
+    else {
+      return UICollectionViewCell()
+    }
 
     cell.configure(with: tab)
 
@@ -197,7 +202,10 @@ class TabTrayController: LoadingViewController {
 
     cell.closedTab = { [weak self] tab in
       self?.remove(tab: tab)
-      UIAccessibility.post(notification: .announcement, argument: Strings.tabTrayClosingTabAccessibilityNotificationText)
+      UIAccessibility.post(
+        notification: .announcement,
+        argument: Strings.tabTrayClosingTabAccessibilityNotificationText
+      )
     }
 
     return cell
@@ -285,7 +293,9 @@ class TabTrayController: LoadingViewController {
 
 extension TabTrayController: UICollectionViewDelegate {
   func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-    guard let tab = dataSource.itemIdentifier(for: indexPath) else { return }
+    guard let tab = dataSource.itemIdentifier(for: indexPath) else {
+      return
+    }
     tabManager.selectTab(tab)
 
     tabTraySearchController.isActive = false
@@ -328,9 +338,14 @@ extension TabTrayController: TabManagerDelegate {
 // MARK: UICollectionViewDragDelegate
 
 extension TabTrayController: UICollectionViewDragDelegate {
-  func collectionView(_ collectionView: UICollectionView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
-
-    guard let tab = dataSource.itemIdentifier(for: indexPath) else { return [] }
+  func collectionView(
+    _ collectionView: UICollectionView,
+    itemsForBeginning session: UIDragSession,
+    at indexPath: IndexPath
+  ) -> [UIDragItem] {
+    guard let tab = dataSource.itemIdentifier(for: indexPath) else {
+      return []
+    }
 
     UIImpactFeedbackGenerator(style: .medium).bzzt()
 
@@ -347,11 +362,12 @@ extension TabTrayController: UICollectionViewDropDelegate {
     _ collectionView: UICollectionView,
     performDropWith coordinator: UICollectionViewDropCoordinator
   ) {
-
     guard let dragItem = coordinator.items.first?.dragItem,
-      let tab = dragItem.localObject as? Tab,
-      let destinationIndexPath = coordinator.destinationIndexPath
-    else { return }
+          let tab = dragItem.localObject as? Tab,
+          let destinationIndexPath = coordinator.destinationIndexPath
+    else {
+      return
+    }
 
     coordinator.drop(dragItem, toItemAt: destinationIndexPath)
     tabManager.moveTab(tab, toIndex: destinationIndexPath.item)
@@ -359,11 +375,14 @@ extension TabTrayController: UICollectionViewDropDelegate {
     applySnapshot()
   }
 
-  func collectionView(_ collectionView: UICollectionView, dropSessionDidUpdate session: UIDropSession, withDestinationIndexPath destinationIndexPath: IndexPath?) -> UICollectionViewDropProposal {
-
+  func collectionView(
+    _ collectionView: UICollectionView,
+    dropSessionDidUpdate session: UIDropSession,
+    withDestinationIndexPath destinationIndexPath: IndexPath?
+  ) -> UICollectionViewDropProposal {
     guard let localDragSession = session.localDragSession,
-      let item = localDragSession.items.first,
-      let tab = item.localObject as? Tab
+          let item = localDragSession.items.first,
+          let tab = item.localObject as? Tab
     else {
       return .init(operation: .forbidden)
     }
@@ -382,7 +401,9 @@ extension TabTrayController: UIScrollViewAccessibilityDelegate {
   func accessibilityScrollStatus(for scrollView: UIScrollView) -> String? {
     let collectionView = tabTrayView.collectionView
 
-    guard var visibleCells = collectionView.visibleCells as? [TabCell] else { return nil }
+    guard var visibleCells = collectionView.visibleCells as? [TabCell] else {
+      return nil
+    }
     var bounds = collectionView.bounds
     bounds = bounds.offsetBy(dx: collectionView.contentInset.left, dy: collectionView.contentInset.top)
     bounds.size.width -= collectionView.contentInset.left + collectionView.contentInset.right
@@ -392,7 +413,7 @@ extension TabTrayController: UIScrollViewAccessibilityDelegate {
 
     let cells = visibleCells.compactMap { collectionView.indexPath(for: $0) }
     let indexPaths = cells.sorted { (a: IndexPath, b: IndexPath) -> Bool in
-      return a.section < b.section || (a.section == b.section && a.row < b.row)
+      a.section < b.section || (a.section == b.section && a.row < b.row)
     }
 
     if indexPaths.isEmpty {
@@ -410,9 +431,15 @@ extension TabTrayController: UIScrollViewAccessibilityDelegate {
     if firstTabRow == lastTabRow {
       return String(
         format: Strings.tabTraySingleTabPositionFormatVoiceOverText,
-        NSNumber(value: firstTabRow), NSNumber(value: tabCount))
+        NSNumber(value: firstTabRow), NSNumber(value: tabCount)
+      )
     } else {
-      return String(format: Strings.tabTrayMultiTabPositionFormatVoiceOverText, NSNumber(value: firstTabRow as Int), NSNumber(value: lastTabRow), NSNumber(value: tabCount))
+      return String(
+        format: Strings.tabTrayMultiTabPositionFormatVoiceOverText,
+        NSNumber(value: firstTabRow as Int),
+        NSNumber(value: lastTabRow),
+        NSNumber(value: tabCount)
+      )
     }
   }
 }
@@ -420,14 +447,21 @@ extension TabTrayController: UIScrollViewAccessibilityDelegate {
 // MARK: UISearchResultUpdating
 
 extension TabTrayController: UISearchResultsUpdating {
-
   func updateSearchResults(for searchController: UISearchController) {
-    guard let query = searchController.searchBar.text else { return }
+    guard let query = searchController.searchBar.text else {
+      return
+    }
 
     invalidateSearchTimer()
 
     searchTabTrayTimer =
-      Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(fetchSearchResults(timer:)), userInfo: query, repeats: false)
+      Timer.scheduledTimer(
+        timeInterval: 0.1,
+        target: self,
+        selector: #selector(fetchSearchResults(timer:)),
+        userInfo: query,
+        repeats: false
+      )
   }
 
   @objc private func fetchSearchResults(timer: Timer) {
@@ -451,7 +485,6 @@ extension TabTrayController: UISearchResultsUpdating {
 // MARK: UISearchControllerDelegate
 
 extension TabTrayController: UISearchControllerDelegate {
-
   func willPresentSearchController(_ searchController: UISearchController) {
     isTabTrayBeingSearched = true
     tabTraySearchQuery = ""
@@ -492,7 +525,8 @@ class TabTraySearchBar: UIView {
         x: adjustedFrame.origin.x,
         y: adjustedFrame.origin.y + 2,
         width: adjustedFrame.size.width,
-        height: adjustedFrame.size.height - 4)
+        height: adjustedFrame.size.height - 4
+      )
     }
     
     searchBar.frame = adjustedFrame

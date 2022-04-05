@@ -31,6 +31,7 @@ class RadialPulsingAnimation: UIView {
     }
   }
 
+  @available(*, unavailable)
   required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }
@@ -87,7 +88,12 @@ class RadialPulsingAnimation: UIView {
     }
   }
 
-  func present(icon: UIImage?, from view: UIView, on popoverController: PopoverController, browser: BrowserViewController) {
+  func present(
+    icon: UIImage?,
+    from view: UIView,
+    on popoverController: PopoverController,
+    browser: BrowserViewController
+  ) {
     let origin = browser.view.convert(view.center, from: view.superview)
     popoverController.view.insertSubview(self, aboveSubview: popoverController.view)
     

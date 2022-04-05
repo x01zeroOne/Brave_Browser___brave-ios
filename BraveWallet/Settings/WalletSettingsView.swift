@@ -63,8 +63,10 @@ public struct WalletSettingsView: View {
         ) {
           Toggle(
             Strings.Wallet.settingsEnableBiometricsTitle,
-            isOn: Binding(get: { settingsStore.isBiometricsUnlockEnabled },
-                          set: { toggledBiometricsUnlock($0) })
+            isOn: Binding(
+              get: { settingsStore.isBiometricsUnlockEnabled },
+              set: { toggledBiometricsUnlock($0) }
+            )
           )
             .foregroundColor(Color(.braveLabel))
             .toggleStyle(SwitchToggleStyle(tint: .accentColor))
@@ -113,7 +115,8 @@ public struct WalletSettingsView: View {
               Text(Strings.Wallet.settingsResetTransactionAlertButtonTitle),
               action: {
                 settingsStore.resetTransaction()
-              }),
+              }
+            ),
             secondaryButton: .cancel(Text(Strings.cancelButtonTitle))
           )
         }
@@ -128,7 +131,8 @@ public struct WalletSettingsView: View {
               Text(Strings.Wallet.settingsResetWalletAlertButtonTitle),
               action: {
                 settingsStore.reset()
-              }),
+              }
+            ),
             secondaryButton: .cancel(Text(Strings.no))
           )
         }

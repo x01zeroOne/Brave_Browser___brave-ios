@@ -11,7 +11,6 @@ import Swift
 import struct Shared.Strings
 
 struct TransactionDetailsView: View {
-  
   var info: BraveWallet.TransactionInfo
   @ObservedObject var networkStore: NetworkStore
   @ObservedObject var keyringStore: KeyringStore
@@ -32,7 +31,8 @@ struct TransactionDetailsView: View {
   }
   
   private func token(for contractAddress: String) -> BraveWallet.BlockchainToken? {
-    let findToken: (BraveWallet.BlockchainToken) -> Bool = { $0.contractAddress.caseInsensitiveCompare(contractAddress) == .orderedSame }
+    let findToken: (BraveWallet.BlockchainToken)
+      -> Bool = { $0.contractAddress.caseInsensitiveCompare(contractAddress) == .orderedSame }
     return visibleTokens.first(where: findToken) ?? allTokens.first(where: findToken)
   }
 
@@ -62,7 +62,11 @@ struct TransactionDetailsView: View {
         return "0.0"
       }
     case .ethSend, .other:
-      amount = formatter.decimalString(for: info.ethTxValue.removingHexPrefix, radix: .hex, decimals: Int(networkStore.selectedChain.decimals)) ?? ""
+      amount = formatter.decimalString(
+        for: info.ethTxValue.removingHexPrefix,
+        radix: .hex,
+        decimals: Int(networkStore.selectedChain.decimals)
+      ) ?? ""
     @unknown default:
       amount = "0.0"
     }
@@ -76,13 +80,24 @@ struct TransactionDetailsView: View {
     case .erc721TransferFrom, .erc721SafeTransferFrom, .erc20Approve:
       return nil
     case .ethSend, .other:
-      let amount = formatter.decimalString(for: info.ethTxValue.removingHexPrefix, radix: .hex, decimals: Int(networkStore.selectedChain.decimals)) ?? ""
-      let fiat = numberFormatter.string(from: NSNumber(value: assetRatios[networkStore.selectedChain.symbol.lowercased(), default: 0] * (Double(amount) ?? 0))) ?? "$0.00"
+      let amount = formatter.decimalString(
+        for: info.ethTxValue.removingHexPrefix,
+        radix: .hex,
+        decimals: Int(networkStore.selectedChain.decimals)
+      ) ?? ""
+      let fiat = numberFormatter
+        .string(from: NSNumber(
+          value: assetRatios[networkStore.selectedChain.symbol.lowercased(), default: 0] *
+            (Double(amount) ?? 0)
+        )) ?? "$0.00"
       return fiat
     case .erc20Transfer:
       if let value = info.txArgs[safe: 1], let token = token(for: info.ethTxToAddress) {
-        let amount = formatter.decimalString(for: value.removingHexPrefix, radix: .hex, decimals: Int(token.decimals)) ?? ""
-        let fiat = numberFormatter.string(from: NSNumber(value: assetRatios[token.symbol.lowercased(), default: 0] * (Double(amount) ?? 0))) ?? "$0.00"
+        let amount = formatter
+          .decimalString(for: value.removingHexPrefix, radix: .hex, decimals: Int(token.decimals)) ?? ""
+        let fiat = numberFormatter
+          .string(from: NSNumber(value: assetRatios[token.symbol.lowercased(), default: 0] * (Double(amount) ?? 0))) ??
+          "$0.00"
         return fiat
       } else {
         return "$0.00"
@@ -98,9 +113,14 @@ struct TransactionDetailsView: View {
     let limit = info.ethTxGasLimit
     let formatter = WeiFormatter(decimalFormatStyle: .gasFee(limit: limit.removingHexPrefix, radix: .hex))
     let hexFee = isEIP1559Transaction ? (info.txDataUnion.ethTxData1559?.maxFeePerGas ?? "") : info.ethTxGasPrice
-    if let value = formatter.decimalString(for: hexFee.removingHexPrefix, radix: .hex, decimals: Int(networkStore.selectedChain.decimals)) {
+    if let value = formatter.decimalString(
+      for: hexFee.removingHexPrefix,
+      radix: .hex,
+      decimals: Int(networkStore.selectedChain.decimals)
+    ) {
       return (value, {
-        guard let doubleValue = Double(value), let assetRatio = assetRatios[networkStore.selectedChain.symbol.lowercased()] else {
+        guard let doubleValue = Double(value),
+              let assetRatio = assetRatios[networkStore.selectedChain.symbol.lowercased()] else {
           return "$0.00"
         }
         return numberFormatter.string(from: NSNumber(value: doubleValue * assetRatio)) ?? "$0.00"
@@ -121,7 +141,8 @@ struct TransactionDetailsView: View {
   /// The market price for the asset
   private var marketPrice: String {
     let symbol = networkStore.selectedChain.symbol
-    let marketPrice = numberFormatter.string(from: NSNumber(value: assetRatios[symbol.lowercased(), default: 0])) ?? "$0.00"
+    let marketPrice = numberFormatter
+      .string(from: NSNumber(value: assetRatios[symbol.lowercased(), default: 0])) ?? "$0.00"
     return marketPrice
   }
 
@@ -170,7 +191,10 @@ struct TransactionDetailsView: View {
             detailRow(title: Strings.Wallet.transactionDetailsTxFeeTitle, value: transactionFee)
           }
           detailRow(title: Strings.Wallet.transactionDetailsMarketPriceTitle, value: marketPrice)
-          detailRow(title: Strings.Wallet.transactionDetailsDateTitle, value: dateFormatter.string(from: info.createdTime))
+          detailRow(
+            title: Strings.Wallet.transactionDetailsDateTitle,
+            value: dateFormatter.string(from: info.createdTime)
+          )
           if !info.txHash.isEmpty {
             Button(action: {
               if let baseURL = self.networkStore.selectedChain.blockExplorerUrls.first.map(URL.init(string:)),
@@ -183,7 +207,7 @@ struct TransactionDetailsView: View {
                   Text(info.txHash.truncatedHash)
                   Image(systemName: "arrow.up.forward.square")
                 }
-                  .foregroundColor(Color(.braveBlurpleTint))
+                .foregroundColor(Color(.braveBlurpleTint))
               }
             }
             .listRowBackground(Color(.secondaryBraveGroupedBackground))

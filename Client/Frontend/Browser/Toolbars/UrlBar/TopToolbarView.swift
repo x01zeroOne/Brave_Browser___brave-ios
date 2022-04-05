@@ -81,7 +81,7 @@ class TopToolbarView: UIView, ToolbarProtocol {
   var inOverlayMode = false
 
   var currentURL: URL? {
-    get { return locationView.url as URL? }
+    get { locationView.url as URL? }
 
     set(newURL) {
       locationView.url = newURL
@@ -90,7 +90,7 @@ class TopToolbarView: UIView, ToolbarProtocol {
   }
 
   var secureContentState: TabSecureContentState {
-    get { return locationView.secureContentState }
+    get { locationView.secureContentState }
     set { locationView.secureContentState = newValue }
   }
 
@@ -315,7 +315,9 @@ class TopToolbarView: UIView, ToolbarProtocol {
   private var topToolbarPadding: CGFloat {
     // The only case where we want small padding is on iPads and iPhones in landscape.
     // Instead of padding we give extra tap area for buttons on the toolbar.
-    if !inOverlayMode && toolbarIsShowing { return TopToolbarViewUX.smallPadding }
+    if !inOverlayMode && toolbarIsShowing {
+      return TopToolbarViewUX.smallPadding
+    }
     return TopToolbarViewUX.normalPadding
   }
 
@@ -329,11 +331,15 @@ class TopToolbarView: UIView, ToolbarProtocol {
   /// Created whenever the location bar on top is selected
   ///     it is "converted" from static to actual TextField
   private func createLocationTextField() {
-    guard locationTextField == nil else { return }
+    guard locationTextField == nil else {
+      return
+    }
 
     locationTextField = UrlBarTextField()
 
-    guard let locationTextField = locationTextField else { return }
+    guard let locationTextField = locationTextField else {
+      return
+    }
 
     locationTextField.backgroundColor = .braveBackground
     locationTextField.translatesAutoresizingMaskIntoConstraints = false
@@ -356,7 +362,8 @@ class TopToolbarView: UIView, ToolbarProtocol {
     locationTextField.snp.remakeConstraints { make in
       let insets = UIEdgeInsets(
         top: 0, left: TopToolbarViewUX.locationPadding,
-        bottom: 0, right: TopToolbarViewUX.locationPadding)
+        bottom: 0, right: TopToolbarViewUX.locationPadding
+      )
       make.edges.equalTo(self.locationView).inset(insets)
     }
 
@@ -364,7 +371,7 @@ class TopToolbarView: UIView, ToolbarProtocol {
   }
 
   override func becomeFirstResponder() -> Bool {
-    return self.locationTextField?.becomeFirstResponder() ?? false
+    self.locationTextField?.becomeFirstResponder() ?? false
   }
 
   private func removeLocationTextField() {
@@ -393,7 +400,7 @@ class TopToolbarView: UIView, ToolbarProtocol {
   }
 
   func currentProgress() -> Float {
-    return progressBar.progress
+    progressBar.progress
   }
 
   static let psuedoProgressValue: Float = 0.1
@@ -477,7 +484,9 @@ class TopToolbarView: UIView, ToolbarProtocol {
   }
 
   func leaveOverlayMode(didCancel cancel: Bool = false) {
-    if !inOverlayMode { return }
+    if !inOverlayMode {
+      return
+    }
     locationTextField?.resignFirstResponder()
     animateToOverlayState(overlayMode: false, didCancel: cancel)
     delegate?.topToolbarDidLeaveOverlayMode(self)
@@ -587,11 +596,14 @@ extension TopToolbarView: TabLocationViewDelegate {
   }
 
   func tabLocationViewDidLongPressReaderMode(_ tabLocationView: TabLocationView) -> Bool {
-    return delegate?.topToolbarDidLongPressReaderMode(self) ?? false
+    delegate?.topToolbarDidLongPressReaderMode(self) ?? false
   }
 
   func tabLocationViewDidTapLocation(_ tabLocationView: TabLocationView) {
-    guard let (locationText, isSearchQuery) = delegate?.topToolbarDisplayTextForURL(locationView.url as URL?) else { return }
+    guard let (locationText, isSearchQuery) = delegate?.topToolbarDisplayTextForURL(locationView.url as URL?)
+    else {
+      return
+    }
 
     var overlayText = locationText
     // Make sure to use the result from topToolbarDisplayTextForURL as it is responsible for extracting out search terms when on a search page
@@ -634,7 +646,9 @@ extension TopToolbarView: TabLocationViewDelegate {
 
 extension TopToolbarView: AutocompleteTextFieldDelegate {
   func autocompleteTextFieldShouldReturn(_ autocompleteTextField: AutocompleteTextField) -> Bool {
-    guard let text = locationTextField?.text else { return true }
+    guard let text = locationTextField?.text else {
+      return true
+    }
     if !text.trimmingCharacters(in: .whitespaces).isEmpty {
       delegate?.topToolbar(self, didSubmitText: text)
       return true

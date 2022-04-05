@@ -10,7 +10,6 @@ import BigNumber
 import Shared
 
 struct TransactionConfirmationView: View {
-
   @ObservedObject var confirmationStore: TransactionConfirmationStore
   @ObservedObject var networkStore: NetworkStore
   @ObservedObject var keyringStore: KeyringStore
@@ -26,11 +25,14 @@ struct TransactionConfirmationView: View {
   @State private var viewMode: ViewMode = .transaction
 
   private var activeTransaction: BraveWallet.TransactionInfo {
-    confirmationStore.transactions.first(where: { $0.id == confirmationStore.activeTransactionId }) ?? (confirmationStore.transactions.first ?? .init())
+    confirmationStore.transactions
+      .first(where: { $0.id == confirmationStore.activeTransactionId }) ??
+      (confirmationStore.transactions.first ?? .init())
   }
 
   private func next() {
-    if let index = confirmationStore.transactions.firstIndex(where: { $0.id == confirmationStore.activeTransactionId }) {
+    if let index = confirmationStore.transactions
+      .firstIndex(where: { $0.id == confirmationStore.activeTransactionId }) {
       var nextIndex = confirmationStore.transactions.index(after: index)
       if nextIndex == confirmationStore.transactions.endIndex {
         nextIndex = 0
@@ -52,7 +54,7 @@ struct TransactionConfirmationView: View {
   }
 
   private var toAccountName: String {
-    return NamedAddresses.name(for: activeTransaction.ethTxToAddress, accounts: keyringStore.keyring.accountInfos)
+    NamedAddresses.name(for: activeTransaction.ethTxToAddress, accounts: keyringStore.keyring.accountInfos)
   }
 
   private var transactionType: String {
@@ -75,7 +77,7 @@ struct TransactionConfirmationView: View {
       return "0x\(data)"
     } else {
       return zip(activeTransaction.txParams, activeTransaction.txArgs)
-        .map { (param, arg) in
+        .map { param, arg in
           "\(param): \(arg)"
         }
         .joined(separator: "\n\n")
@@ -123,7 +125,14 @@ struct TransactionConfirmationView: View {
             Spacer()
             if confirmationStore.transactions.count > 1 {
               let index = confirmationStore.transactions.firstIndex(of: activeTransaction) ?? 0
-              Text(String.localizedStringWithFormat(Strings.Wallet.transactionCount, index + 1, confirmationStore.transactions.count))
+              Text(
+                String
+                  .localizedStringWithFormat(
+                    Strings.Wallet.transactionCount,
+                    index + 1,
+                    confirmationStore.transactions.count
+                  )
+              )
                 .fontWeight(.semibold)
               Button(action: next) {
                 Text(Strings.Wallet.nextTransaction)
@@ -183,7 +192,9 @@ struct TransactionConfirmationView: View {
                       Text(Strings.Wallet.amountAndGas)
                         .font(.footnote)
                         .foregroundColor(Color(.secondaryBraveLabel))
-                      Text("\(confirmationStore.state.value) \(confirmationStore.state.symbol) + \(confirmationStore.state.gasValue) \(confirmationStore.state.gasSymbol)")
+                      Text(
+                        "\(confirmationStore.state.value) \(confirmationStore.state.symbol) + \(confirmationStore.state.gasValue) \(confirmationStore.state.gasSymbol)"
+                      )
                         .foregroundColor(Color(.bravePrimary))
                       HStack(spacing: 4) {
                         if !confirmationStore.state.isBalanceSufficient {
@@ -241,7 +252,10 @@ struct TransactionConfirmationView: View {
           }
           if confirmationStore.transactions.count > 1 {
             Button(action: rejectAll) {
-              Text(String.localizedStringWithFormat(Strings.Wallet.rejectAllTransactions, confirmationStore.transactions.count))
+              Text(
+                String
+                  .localizedStringWithFormat(Strings.Wallet.rejectAllTransactions, confirmationStore.transactions.count)
+              )
                 .font(.subheadline.weight(.semibold))
                 .foregroundColor(Color(.braveBlurpleTint))
             }
@@ -270,14 +284,18 @@ struct TransactionConfirmationView: View {
                   startPoint: .top,
                   endPoint: .bottom
                 )
-                .ignoresSafeArea()
-                .allowsHitTesting(false)
+                  .ignoresSafeArea()
+                  .allowsHitTesting(false)
               )
           }
         },
         alignment: .bottom
       )
-      .navigationBarTitle(confirmationStore.transactions.count > 1 ? Strings.Wallet.confirmTransactionsTitle : Strings.Wallet.confirmTransactionTitle)
+      .navigationBarTitle(
+        confirmationStore.transactions.count > 1
+          ? Strings.Wallet.confirmTransactionsTitle
+          : Strings.Wallet.confirmTransactionTitle
+      )
       .navigationBarTitleDisplayMode(.inline)
       .foregroundColor(Color(.braveLabel))
       .background(Color(.braveGroupedBackground).edgesIgnoringSafeArea(.all))
@@ -345,6 +363,7 @@ private struct DetailsTextView: UIViewRepresentable {
     textView.textContainerInset = .init(top: 12, left: 8, bottom: 12, right: 8)
     return textView
   }
+
   func updateUIView(_ uiView: UITextView, context: Context) {
     uiView.text = text
   }
@@ -358,7 +377,7 @@ struct TransactionConfirmationView_Previews: PreviewProvider {
       networkStore: .previewStore,
       keyringStore: .previewStoreWithWalletCreated
     )
-    .previewLayout(.sizeThatFits)
+      .previewLayout(.sizeThatFits)
   }
 }
 #endif

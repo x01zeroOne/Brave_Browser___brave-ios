@@ -48,7 +48,8 @@ extension BraveWalletJsonRpcService {
           tokenId: token.tokenId,
           accountAddress: account.address,
           chainId: network.chainId,
-          completion: convert)
+          completion: convert
+        )
       } else {
         completion(nil)
       }

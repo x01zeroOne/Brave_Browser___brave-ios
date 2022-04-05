@@ -8,7 +8,6 @@ import struct Shared.Strings
 import SwiftUI
 
 struct BiometricsPasscodeEntryView: View {
-  
   @ObservedObject var keyringStore: KeyringStore
   
   private enum UnlockError: LocalizedError {

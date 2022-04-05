@@ -7,7 +7,6 @@ import struct Shared.Strings
 import SwiftUI
 
 struct TransactionHeader: View {
-  
   let fromAccountAddress: String
   let fromAccountName: String
   let toAccountAddress: String

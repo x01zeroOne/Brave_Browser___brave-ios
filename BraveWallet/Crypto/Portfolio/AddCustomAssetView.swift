@@ -149,7 +149,9 @@ struct AddCustomAssetView_Previews: PreviewProvider {
         walletService: MockBraveWalletService(),
         blockchainRegistry: MockBlockchainRegistry(),
         rpcService: MockJsonRpcService(),
-        assetRatioService: MockAssetRatioService()))
+        assetRatioService: MockAssetRatioService()
+      )
+    )
   }
 }
 #endif

@@ -32,8 +32,8 @@ struct AssetIconView: View {
   private var localImage: Image? {
     for logo in [token.logo, token.symbol.lowercased()] {
       if let baseURL = BraveWallet.TokenRegistryUtils.tokenLogoBaseURL,
-        case let imageURL = baseURL.appendingPathComponent(logo),
-        let image = UIImage(contentsOfFile: imageURL.path) {
+         case let imageURL = baseURL.appendingPathComponent(logo),
+         let image = UIImage(contentsOfFile: imageURL.path) {
         return Image(uiImage: image)
       }
     }
@@ -85,9 +85,9 @@ struct AssetIconView_Previews: PreviewProvider {
         chainId: ""
       )
     )
-    .previewLayout(.sizeThatFits)
-    .padding()
-    .previewSizeCategories()
+      .previewLayout(.sizeThatFits)
+      .padding()
+      .previewSizeCategories()
   }
 }
 #endif

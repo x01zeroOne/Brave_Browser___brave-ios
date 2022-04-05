@@ -30,7 +30,9 @@ extension String {
   /// Check if the string is a valid ETH address
   var isETHAddress: Bool {
     // An address has to start with `0x`
-    guard starts(with: "0x") else { return false }
+    guard starts(with: "0x") else {
+      return false
+    }
     
     // removing `0x`
     let hex = removingHexPrefix

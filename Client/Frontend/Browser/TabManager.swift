@@ -39,7 +39,7 @@ class WeakTabManagerDelegate {
   }
 
   func get() -> TabManagerDelegate? {
-    return value
+    value
   }
 }
 
@@ -71,14 +71,12 @@ class TabManager: NSObject {
   fileprivate(set) var isRestoring = false
 
   // A WKWebViewConfiguration used for normal tabs
-  lazy fileprivate var configuration: WKWebViewConfiguration = {
-    return TabManager.getNewConfiguration()
-  }()
+  lazy fileprivate var configuration: WKWebViewConfiguration = TabManager.getNewConfiguration()
 
   fileprivate let imageStore: DiskImageStore?
 
   fileprivate let prefs: Prefs
-  var selectedIndex: Int { return _selectedIndex }
+  var selectedIndex: Int { _selectedIndex }
   var tempTabs: [Tab]?
   private weak var rewards: BraveRewards?
 
@@ -181,7 +179,8 @@ class TabManager: NSObject {
 
     if let query = query, !query.isEmpty {
       // Display title is the only data that will be present on every situation
-      return allTabs.filter { $0.displayTitle.lowercased().contains(query) || ($0.url?.baseDomain?.contains(query) ?? false) }
+      return allTabs
+        .filter { $0.displayTitle.lowercased().contains(query) || ($0.url?.baseDomain?.contains(query) ?? false) }
     } else {
       return allTabs
     }
@@ -244,8 +243,8 @@ class TabManager: NSObject {
 
       // Also look for tabs that haven't been restored yet.
       if let sessionData = tab.sessionData,
-        0..<sessionData.urls.count ~= sessionData.currentPage,
-        sessionData.urls[sessionData.currentPage] == url {
+         0..<sessionData.urls.count ~= sessionData.currentPage,
+         sessionData.urls[sessionData.currentPage] == url {
         return tab
       }
     }
@@ -307,7 +306,10 @@ class TabManager: NSObject {
       TabMO.touch(tabID: tabID)
     }
 
-    guard let newSelectedTab = tab, let previousTab = previous, let newTabUrl = newSelectedTab.url, let previousTabUrl = previousTab.url else { return }
+    guard let newSelectedTab = tab, let previousTab = previous, let newTabUrl = newSelectedTab.url,
+          let previousTabUrl = previousTab.url else {
+      return
+    }
 
     if !PrivateBrowsingManager.shared.isPrivateBrowsing {
       let previousFaviconURL = URL(string: previousTab.displayFavicon?.url ?? "")
@@ -316,14 +318,16 @@ class TabManager: NSObject {
       }
       rewards?.reportTabUpdated(
         Int(previousTab.rewardsId), url: previousTabUrl, faviconURL: previousFaviconURL, isSelected: false,
-        isPrivate: previousTab.isPrivate)
+        isPrivate: previousTab.isPrivate
+      )
       let faviconURL = URL(string: newSelectedTab.displayFavicon?.url ?? "")
       if faviconURL == nil && !newTabUrl.isLocal {
         rewardsLog.warning("No favicon found in \(newSelectedTab) to report to rewards panel")
       }
       rewards?.reportTabUpdated(
         Int(newSelectedTab.rewardsId), url: newTabUrl, faviconURL: faviconURL, isSelected: true,
-        isPrivate: newSelectedTab.isPrivate)
+        isPrivate: newSelectedTab.isPrivate
+      )
     }
   }
 
@@ -364,7 +368,12 @@ class TabManager: NSObject {
   }
 
   @discardableResult
-  func addTabAndSelect(_ request: URLRequest! = nil, configuration: WKWebViewConfiguration! = nil, afterTab: Tab? = nil, isPrivate: Bool) -> Tab {
+  func addTabAndSelect(
+    _ request: URLRequest! = nil,
+    configuration: WKWebViewConfiguration! = nil,
+    afterTab: Tab? = nil,
+    isPrivate: Bool
+  ) -> Tab {
     let tab = addTab(request, configuration: configuration, afterTab: afterTab, isPrivate: isPrivate)
     selectTab(tab)
     return tab
@@ -390,7 +399,15 @@ class TabManager: NSObject {
   }
 
   @discardableResult
-  func addTab(_ request: URLRequest? = nil, configuration: WKWebViewConfiguration? = nil, afterTab: Tab? = nil, flushToDisk: Bool = true, zombie: Bool = false, id: String? = nil, isPrivate: Bool) -> Tab {
+  func addTab(
+    _ request: URLRequest? = nil,
+    configuration: WKWebViewConfiguration? = nil,
+    afterTab: Tab? = nil,
+    flushToDisk: Bool = true,
+    zombie: Bool = false,
+    id: String? = nil,
+    isPrivate: Bool
+  ) -> Tab {
     assert(Thread.isMainThread)
 
     // Take the given configuration. Or if it was nil, take our default configuration for the current browsing mode.
@@ -420,7 +437,8 @@ class TabManager: NSObject {
     let tab = allTabs.remove(at: fromIndex)
     allTabs.insert(tab, at: toIndex)
 
-    if let previouslySelectedTab = previouslySelectedTab, let previousSelectedIndex = allTabs.firstIndex(of: previouslySelectedTab) {
+    if let previouslySelectedTab = previouslySelectedTab,
+       let previousSelectedIndex = allTabs.firstIndex(of: previouslySelectedTab) {
       _selectedIndex = previousSelectedIndex
     }
 
@@ -428,12 +446,22 @@ class TabManager: NSObject {
   }
 
   private func saveTabOrder() {
-    if PrivateBrowsingManager.shared.isPrivateBrowsing { return }
-    let allTabIds = allTabs.compactMap { $0.id }
+    if PrivateBrowsingManager.shared.isPrivateBrowsing {
+      return
+    }
+    let allTabIds = allTabs.compactMap(\.id)
     TabMO.saveTabOrder(tabIds: allTabIds)
   }
 
-  func configureTab(_ tab: Tab, request: URLRequest?, afterTab parent: Tab? = nil, flushToDisk: Bool, zombie: Bool, id: String? = nil, isPopup: Bool = false) {
+  func configureTab(
+    _ tab: Tab,
+    request: URLRequest?,
+    afterTab parent: Tab? = nil,
+    flushToDisk: Bool,
+    zombie: Bool,
+    id: String? = nil,
+    isPopup: Bool = false
+  ) {
     assert(Thread.isMainThread)
 
     let isPrivate = tab.type == .private
@@ -497,7 +525,9 @@ class TabManager: NSObject {
     // as well as regular pages that load DOM normally.
     var debounce_timer: Timer?
     tab.onPageReadyStateChanged = { [weak self] state in
-      guard let self = self else { return }
+      guard let self = self else {
+        return
+      }
       
       debounce_timer?.invalidate()
       debounce_timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
@@ -515,7 +545,8 @@ class TabManager: NSObject {
   }
 
   func indexOfWebView(_ webView: WKWebView) -> UInt? {
-    objc_sync_enter(self); defer { objc_sync_exit(self) }
+    objc_sync_enter(self)
+    defer { objc_sync_exit(self) }
 
     var count = UInt(0)
     for tab in allTabs {
@@ -529,8 +560,12 @@ class TabManager: NSObject {
   }
 
   func saveTab(_ tab: Tab, saveOrder: Bool = false) {
-    if PrivateBrowsingManager.shared.isPrivateBrowsing { return }
-    guard let data = savedTabData(tab: tab) else { return }
+    if PrivateBrowsingManager.shared.isPrivateBrowsing {
+      return
+    }
+    guard let data = savedTabData(tab: tab) else {
+      return
+    }
 
     TabMO.update(tabData: data)
     if saveOrder {
@@ -539,14 +574,17 @@ class TabManager: NSObject {
   }
 
   func savedTabData(tab: Tab) -> SavedTab? {
-
-    guard let webView = tab.webView, let order = indexOfWebView(webView) else { return nil }
+    guard let webView = tab.webView, let order = indexOfWebView(webView) else {
+      return nil
+    }
 
     // Ignore session restore data.
     guard let url = tab.url,
-      !InternalURL.isValid(url: url),
-      !(InternalURL(url)?.isSessionRestore ?? false)
-    else { return nil }
+          !InternalURL.isValid(url: url),
+          !(InternalURL(url)?.isSessionRestore ?? false)
+    else {
+      return nil
+    }
 
     var urls = [URL]()
     var currentPage = 0
@@ -555,8 +593,8 @@ class TabManager: NSObject {
       // Freshly created web views won't have any history entries at all.
       let backList = webView.backForwardList.backList
       let forwardList = webView.backForwardList.forwardList
-      let backListMap = backList.map { $0.url }
-      let forwardListMap = forwardList.map { $0.url }
+      let backListMap = backList.map(\.url)
+      let forwardListMap = forwardList.map(\.url)
       let currentItem = currentItem.url
 
       log.debug("backList: \(backListMap)")
@@ -575,13 +613,14 @@ class TabManager: NSObject {
 
       let isSelected = selectedTab === tab
 
-      let urls = SessionData.updateSessionURLs(urls: urls).map({ $0.absoluteString })
+      let urls = SessionData.updateSessionURLs(urls: urls).map(\.absoluteString)
       let data = SavedTab(
         id: id, title: title, url: url.absoluteString,
         isSelected: isSelected, order: Int16(order),
         screenshot: nil, history: urls,
         historyIndex: Int16(currentPage),
-        isPrivate: tab.isPrivate)
+        isPrivate: tab.isPrivate
+      )
       return data
     }
 
@@ -638,18 +677,19 @@ class TabManager: NSObject {
       // It might have changed index, so we look it up again.
       _selectedIndex = allTabs.firstIndex(of: oldTab) ?? -1
     } else if let parentTab = tab.parent,
-      currentTabs.count > 1,
-      let newTab = currentTabs.reduce(
-        currentTabs.first, { currentBestTab, tab2 in
-          if let tab1 = currentBestTab, let time1 = tab1.lastExecutedTime {
-            if let time2 = tab2.lastExecutedTime {
-              return time1 <= time2 ? tab2 : tab1
-            }
-            return tab1
-          } else {
-            return tab2
-          }
-        }), parentTab == newTab, tab !== newTab, newTab.lastExecutedTime != nil {
+              currentTabs.count > 1,
+              let newTab = currentTabs.reduce(
+                currentTabs.first, { currentBestTab, tab2 in
+                  if let tab1 = currentBestTab, let time1 = tab1.lastExecutedTime {
+                    if let time2 = tab2.lastExecutedTime {
+                      return time1 <= time2 ? tab2 : tab1
+                    }
+                    return tab1
+                  } else {
+                    return tab2
+                  }
+                }
+              ), parentTab == newTab, tab !== newTab, newTab.lastExecutedTime != nil {
       // We select the most recently visited tab, only if it is also the parent tab of the closed tab.
       _selectedIndex = allTabs.firstIndex(of: newTab) ?? -1
     } else {
@@ -710,7 +750,8 @@ class TabManager: NSObject {
     tab.webView?.configuration.websiteDataStore.removeData(
       ofTypes: dataTypes,
       modifiedSince: Date.distantPast,
-      completionHandler: completionHandler)
+      completionHandler: completionHandler
+    )
   }
 
   func removeTabsWithUndoToast(_ tabs: [Tab]) {
@@ -733,7 +774,8 @@ class TabManager: NSObject {
     var toast: ButtonToast?
     if let numberOfTabs = tempTabs?.count, numberOfTabs > 0 {
       toast = ButtonToast(
-        labelText: String.localizedStringWithFormat(Strings.tabsDeleteAllUndoTitle, numberOfTabs), buttonText: Strings.tabsDeleteAllUndoAction,
+        labelText: String.localizedStringWithFormat(Strings.tabsDeleteAllUndoTitle, numberOfTabs),
+        buttonText: Strings.tabsDeleteAllUndoAction,
         completion: { buttonPressed in
           if buttonPressed {
             self.undoCloseTabs()
@@ -742,7 +784,8 @@ class TabManager: NSObject {
             }
           }
           self.eraseUndoCache()
-        })
+        }
+      )
     }
 
     delegates.forEach { $0.get()?.tabManagerDidRemoveAllTabs(self, toast: toast) }
@@ -812,7 +855,9 @@ class TabManager: NSObject {
   }
 
   static fileprivate func tabsStateArchivePath() -> String {
-    guard let profilePath = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppInfo.sharedContainerIdentifier)?.appendingPathComponent("profile.profile").path else {
+    guard let profilePath = FileManager.default
+      .containerURL(forSecurityApplicationGroupIdentifier: AppInfo.sharedContainerIdentifier)?
+      .appendingPathComponent("profile.profile").path else {
       let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
       return URL(fileURLWithPath: documentsPath).appendingPathComponent("tabsState.archive").path
     }
@@ -821,13 +866,20 @@ class TabManager: NSObject {
   }
 
   static fileprivate func migrateTabsStateArchive() {
-    guard let oldPath = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathComponent("tabsState.archive").path, FileManager.default.fileExists(atPath: oldPath) else {
+    guard let oldPath = try? FileManager.default.url(
+      for: .documentDirectory,
+      in: .userDomainMask,
+      appropriateFor: nil,
+      create: false
+    ).appendingPathComponent("tabsState.archive").path, FileManager.default.fileExists(atPath: oldPath) else {
       return
     }
 
     log.info("Migrating tabsState.archive from ~/Documents to shared container")
 
-    guard let profilePath = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppInfo.sharedContainerIdentifier)?.appendingPathComponent("profile.profile").path else {
+    guard let profilePath = FileManager.default
+      .containerURL(forSecurityApplicationGroupIdentifier: AppInfo.sharedContainerIdentifier)?
+      .appendingPathComponent("profile.profile").path else {
       log.error("Unable to get profile path in shared container to move tabsState.archive")
       return
     }
@@ -857,12 +909,16 @@ class TabManager: NSObject {
 
   private func preserveScreenshots() {
     assert(Thread.isMainThread)
-    if isRestoring { return }
+    if isRestoring {
+      return
+    }
 
     var savedUUIDs = Set<String>()
 
     for tab in allTabs {
-      guard let screenshot = tab.screenshot, let screenshotUUID = tab.screenshotUUID else { continue }
+      guard let screenshot = tab.screenshot, let screenshotUUID = tab.screenshotUUID else {
+        continue
+      }
       savedUUIDs.insert(screenshotUUID.uuidString)
       imageStore?.put(screenshotUUID.uuidString, image: screenshot)
     }
@@ -875,7 +931,8 @@ class TabManager: NSObject {
     var savedTabs = [TabMO]()
 
     if let autocloseTime = Preferences.AutoCloseTabsOption(
-      rawValue: Preferences.General.autocloseTabs.value)?.timeInterval {
+      rawValue: Preferences.General.autocloseTabs.value
+    )?.timeInterval {
       // To avoid db problems, we first retrieve fresh tabs(on main thread context)
       // then delete old tabs(background thread context)
       savedTabs = TabMO.all(noOlderThan: autocloseTime)
@@ -884,7 +941,9 @@ class TabManager: NSObject {
       savedTabs = TabMO.getAll()
     }
 
-    if savedTabs.isEmpty { return nil }
+    if savedTabs.isEmpty {
+      return nil
+    }
 
     var tabToSelect: Tab?
     for savedTab in savedTabs {
@@ -896,13 +955,14 @@ class TabManager: NSObject {
       // Provide an empty request to prevent a new tab from loading the home screen
       let tab = addTab(
         nil, configuration: nil, afterTab: nil, flushToDisk: false, zombie: true,
-        id: savedTab.syncUUID, isPrivate: false)
+        id: savedTab.syncUUID, isPrivate: false
+      )
 
       // Since this is a restored tab, reset the URL to be loaded as that will be handled by the SessionRestoreHandler
       tab.url = nil
       let isPrivateBrowsing = PrivateBrowsingManager.shared.isPrivateBrowsing
       if let url = URL(string: urlString),
-        let faviconURL = Domain.getOrCreate(forUrl: url, persistent: !isPrivateBrowsing).favicon?.url {
+         let faviconURL = Domain.getOrCreate(forUrl: url, persistent: !isPrivateBrowsing).favicon?.url {
         let icon = Favicon(url: faviconURL, date: Date())
         icon.width = 1
         tab.favicons.append(icon)
@@ -942,10 +1002,22 @@ class TabManager: NSObject {
 
   func restoreTab(_ tab: Tab) {
     // Tab was created with no active webview or session data. Restore tab data from CD and configure.
-    guard let savedTab = TabMO.get(fromId: tab.id) else { return }
+    guard let savedTab = TabMO.get(fromId: tab.id) else {
+      return
+    }
 
     if let history = savedTab.urlHistorySnapshot as? [String], let tabUUID = savedTab.syncUUID, let url = savedTab.url {
-      let data = SavedTab(id: tabUUID, title: savedTab.title, url: url, isSelected: savedTab.isSelected, order: savedTab.order, screenshot: nil, history: history, historyIndex: savedTab.urlHistoryCurrentIndex, isPrivate: tab.isPrivate)
+      let data = SavedTab(
+        id: tabUUID,
+        title: savedTab.title,
+        url: url,
+        isSelected: savedTab.isSelected,
+        order: savedTab.order,
+        screenshot: nil,
+        history: history,
+        historyIndex: savedTab.urlHistoryCurrentIndex,
+        isPrivate: tab.isPrivate
+      )
       if let webView = tab.webView {
         tab.navigationDelegate = navDelegate
         tab.restore(webView, restorationData: data)
@@ -979,7 +1051,6 @@ class TabManager: NSObject {
 }
 
 extension TabManager: WKNavigationDelegate {
-
   // Note the main frame JSContext (i.e. document, window) is not available yet.
   func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
     if let tab = self[webView] {
@@ -990,12 +1061,18 @@ extension TabManager: WKNavigationDelegate {
   // The main frame JSContext is available, and DOM parsing has begun.
   // Do not excute JS at this point that requires running prior to DOM parsing.
   func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-    guard let tab = self[webView] else { return }
+    guard let tab = self[webView] else {
+      return
+    }
     let isNoImageMode = Preferences.Shields.blockImages.value
     tab.noImageMode = isNoImageMode
 
     if !tab.contentBlocker.isEnabled {
-      webView.evaluateSafeJavaScript(functionName: "window.__firefox__.TrackingProtectionStats.setEnabled", args: [false, UserScriptManager.securityTokenString], contentWorld: .page)
+      webView.evaluateSafeJavaScript(
+        functionName: "window.__firefox__.TrackingProtectionStats.setEnabled",
+        args: [false, UserScriptManager.securityTokenString],
+        contentWorld: .page
+      )
     }
   }
 
@@ -1020,7 +1097,8 @@ extension TabManager: WKNavigationDelegate {
   }
 
   func tabForWebView(_ webView: WKWebView) -> Tab? {
-    objc_sync_enter(self); defer { objc_sync_exit(self) }
+    objc_sync_enter(self)
+    defer { objc_sync_exit(self) }
 
     return allTabs.first(where: { $0.webView === webView })
   }
@@ -1076,16 +1154,20 @@ class TabManagerNavDelegate: NSObject, WKNavigationDelegate {
     }
   }
 
-  func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+  func webView(
+    _ webView: WKWebView,
+    didReceive challenge: URLAuthenticationChallenge,
+    completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+  ) {
     let authenticatingDelegates = delegates.filter { wv in
-      return wv.responds(to: #selector(webView(_:didReceive:completionHandler:)))
+      wv.responds(to: #selector(webView(_:didReceive:completionHandler:)))
     }
 
     guard let firstAuthenticatingDelegate = authenticatingDelegates.first else {
       return completionHandler(.performDefaultHandling, nil)
     }
 
-    firstAuthenticatingDelegate.webView?(webView, didReceive: challenge) { (disposition, credential) in
+    firstAuthenticatingDelegate.webView?(webView, didReceive: challenge) { disposition, credential in
       completionHandler(disposition, credential)
     }
   }
@@ -1114,8 +1196,12 @@ class TabManagerNavDelegate: NSObject, WKNavigationDelegate {
     return .allow
   }
 
-  func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, preferences: WKWebpagePreferences, decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void) {
-
+  func webView(
+    _ webView: WKWebView,
+    decidePolicyFor navigationAction: WKNavigationAction,
+    preferences: WKWebpagePreferences,
+    decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void
+  ) {
     var res = defaultAllowPolicy()
     var pref = preferences
     for delegate in delegates {
@@ -1127,7 +1213,8 @@ class TabManagerNavDelegate: NSObject, WKNavigationDelegate {
           }
 
           pref = preference
-        })
+        }
+      )
     }
 
     decisionHandler(res, pref)
@@ -1146,7 +1233,8 @@ class TabManagerNavDelegate: NSObject, WKNavigationDelegate {
           if policy == .cancel {
             res = policy
           }
-        })
+        }
+      )
     }
 
     if res == .allow {

@@ -56,15 +56,18 @@ class ReadyStateScriptHelper: TabContentScript {
   }
   
   class func name() -> String {
-    return "ReadyStateScriptHelper"
+    "ReadyStateScriptHelper"
   }
 
   func scriptMessageHandlerName() -> String? {
-    return "ReadyState_\(UserScriptManager.messageHandlerTokenString)"
+    "ReadyState_\(UserScriptManager.messageHandlerTokenString)"
   }
 
-  func userContentController(_ userContentController: WKUserContentController, didReceiveScriptMessage message: WKScriptMessage, replyHandler: (Any?, String?) -> Void) {
-    
+  func userContentController(
+    _ userContentController: WKUserContentController,
+    didReceiveScriptMessage message: WKScriptMessage,
+    replyHandler: (Any?, String?) -> Void
+  ) {
     defer { replyHandler(nil, nil) }
 
     guard let readyState = ReadyState.from(message: message) else {
