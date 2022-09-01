@@ -40,116 +40,22 @@ extension AppDelegate {
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
   var window: UIWindow?
-  lazy var braveCore: BraveCoreMain = {
-    var switches: [BraveCoreSwitch: String] = [:]
-    if !AppConstants.buildChannel.isPublic {
-      // Check prefs for additional switches
-      let activeSwitches = Preferences.BraveCore.activeSwitches.value
-      let switchValues = Preferences.BraveCore.switchValues.value
-      for activeSwitch in activeSwitches {
-        if let value = switchValues[activeSwitch], !value.isEmpty {
-          switches[BraveCoreSwitch(rawValue: activeSwitch)] = value
-        }
-      }
-    }
-    return BraveCoreMain(userAgent: UserAgent.mobile, additionalSwitches: switches)
-  }()
-  
   var migration: Migration?
-
-  private weak var application: UIApplication?
-  var launchOptions: [AnyHashable: Any]?
-
   let appVersion = Bundle.main.infoDictionaryString(forKey: "CFBundleShortVersionString")
 
   var receivedURLs: [URL]?
   var shutdownWebServer: Timer?
 
-  /// Object used to handle server pings
-  private(set) lazy var dau = DAU(braveCoreStats: braveCore.braveStats)
-
   private var cancellables: Set<AnyCancellable> = []
   private var sceneInfo: SceneInfoModel?
-  
-  override init() {
-    #if MOZ_CHANNEL_RELEASE
-    AppConstants.buildChannel = .release
-    #elseif MOZ_CHANNEL_BETA
-    AppConstants.buildChannel = .beta
-    #elseif MOZ_CHANNEL_DEV
-    AppConstants.buildChannel = .dev
-    #elseif MOZ_CHANNEL_ENTERPRISE
-    AppConstants.buildChannel = .enterprise
-    #elseif MOZ_CHANNEL_DEBUG
-    AppConstants.buildChannel = .debug
-    #endif
-    super.init()
-  }
 
-  @discardableResult
-  func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-    // Hold references to willFinishLaunching parameters for delayed app launch
-    self.application = application
-    self.launchOptions = launchOptions
-
-    // Brave Core Initialization
-    BraveCoreMain.setLogHandler { severity, file, line, messageStartIndex, message in
-      let message = String(message.dropFirst(messageStartIndex).dropLast())
-        .trimmingCharacters(in: .whitespacesAndNewlines)
-      if message.isEmpty {
-        // Nothing to print
-        return true
-      }
-      
-      if severity == .fatal {
-        let filename = URL(fileURLWithPath: file).lastPathComponent
-#if DEBUG
-        // Prints a special runtime warning instead of crashing.
-        os_log(
-          .fault,
-          dso: os_rw.dso,
-          log: os_rw.log(category: "BraveCore"),
-          "[%@:%ld] > %@", filename, line, message
-        )
-        return true
-#else
-        fatalError("Fatal BraveCore Error at \(filename):\(line).\n\(message)")
-#endif
-      }
-
-      let level: XCGLogger.Level = {
-        switch severity {
-        case .fatal: return .severe
-        case .error: return .error
-        case .warning: return .warning
-        case .info: return .info
-        default: return .debug
-        }
-      }()
-
-      Logger.braveCoreLogger.logln(
-        level,
-        fileName: file,
-        lineNumber: Int(line),
-        // Only print the actual message content, and drop the final character which is
-        // a new line as it will be handled by logln
-        closure: { message }
-      )
-      return true
-    }
-
-    migration = Migration(braveCore: braveCore)
-    // Setup Adblock Stats and HTTPSE Stats.
-    AdBlockStats.shared.startLoading()
-
-    // TODO: Downgrade to 14.5 once api becomes available.
-    if #unavailable(iOS 15.0) {
-      HttpsEverywhereStats.shared.startLoading()
-    }
-
-    // Must happen before passcode check, otherwise may unnecessarily reset keychain
-    migration?.moveDatabaseToApplicationDirectory()
-
+  /// The launch process has begun but state restoration hasn't occured.
+  /// This method is called after the app has been launched and its main storyboard or nib file has been loaded, but before the app's state has been restored.
+  func application(_ application: UIApplication, willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+    
+    // Set Application State
+    AppState.shared.state = .launching(options: launchOptions ?? [:], active: false)
+    
     // Passcode checking, must happen on immediate launch
     if !DataController.shared.storeExists() {
       // Reset password authentication prior to `WindowProtection`
@@ -157,16 +63,28 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
       // upon reinstall.
       KeychainWrapper.sharedAppContainerKeychain.setAuthenticationInfo(nil)
     }
-
-    return startApplication(application, withLaunchOptions: launchOptions)
-  }
-
-  @discardableResult
-  fileprivate func startApplication(_ application: UIApplication, withLaunchOptions launchOptions: [AnyHashable: Any]?) -> Bool {
-    log.info("startApplication begin")
-
-    // Set the Safari UA for browsing.
+    
+    // Set the Safari User-Agent for browsing.
     setUserAgent()
+    
+    // Create a new sync log file on cold app launch.
+    // Note that this doesn't roll old logs.
+    let logDate = Date()
+    Logger.syncLogger.newLogWithDate(logDate)
+    Logger.browserLogger.newLogWithDate(logDate)
+    return true
+  }
+  
+  /// The launch process is almost done and the app is almost ready to run.
+  /// This method is called after state restoration has occurred but before the app's window and other UI have been presented.
+  func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+
+    // Set Application State
+    AppState.shared.state = .launching(options: launchOptions ?? [:], active: true)
+    
+    // Setup First Run
+    SystemUtils.onFirstRun()
+    
     // Moving Brave VPN v1 users to v2 type of credentials.
     // This is a light operation, can be called at every launch without troubles.
     BraveVPN.migrateV1Credentials()
@@ -180,13 +98,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     SDImageCodersManager.shared.addCoder(PrivateCDNImageCoder())
 
-    let logDate = Date()
-    // Create a new sync log file on cold app launch. Note that this doesn't roll old logs.
-    Logger.syncLogger.newLogWithDate(logDate)
-    Logger.browserLogger.newLogWithDate(logDate)
-
     // Setup Profile
     let profile = BrowserProfile(localName: "profile")
+    _ = BrowserProfile(localName: "profile")
+    _ = BrowserProfile(localName: "profile")
 
     // Setup DiskImageStore for Screenshots
     let diskImageStore = { () -> DiskImageStore? in
@@ -233,17 +148,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
       // Base opt-in visibility on whether or not the user's language is supported in BT
       Preferences.BraveNews.isShowingOptIn.value = FeedDataSource.supportedLanguages.contains(String(languageCode))
     }
-
-    SystemUtils.onFirstRun()
-
-    // Schedule Brave Core Priority Tasks
-    braveCore.scheduleLowPriorityStartupTasks()
-
-    log.info("startApplication end")
-    return true
-  }
-
-  func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    
     // IAPs can trigger on the app as soon as it launches,
     // for example when a previous transaction was not finished and is in pending state.
     SKPaymentQueue.default().add(BraveVPN.iapObserver)
@@ -350,6 +255,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
       UrpLog.log("Failed to initialize user referral program")
     }
 
+    // Setup Adblock Stats and HTTPSE Stats.
+    // TODO: Downgrade to 14.5 once api becomes available.
+    if #unavailable(iOS 15.0) {
+      HttpsEverywhereStats.shared.startLoading()
+    }
+    AdBlockStats.shared.startLoading()
     AdblockResourceDownloader.shared.startLoading()
     CosmeticFiltersResourceDownloader.shared.startLoading()
     DebouncingResourceDownloader.shared.startLoading()
@@ -364,7 +275,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     SKPaymentQueue.default().remove(BraveVPN.iapObserver)
 
     // Clean up BraveCore
-    braveCore.syncAPI.removeAllObservers()
+    //braveCore.syncAPI.removeAllObservers()
 
     log.debug("Cleanly Terminated the Application")
   }
@@ -464,7 +375,7 @@ extension AppDelegate: MFMailComposeViewControllerDelegate {
   func mailComposeController(_ controller: MFMailComposeViewController, didFinishWith result: MFMailComposeResult, error: Error?) {
     // Dismiss the view controller and start the app up
     controller.dismiss(animated: true, completion: nil)
-    startApplication(application!, withLaunchOptions: self.launchOptions)
+    //startApplication(application!, withLaunchOptions: self.launchOptions)
   }
 }
 

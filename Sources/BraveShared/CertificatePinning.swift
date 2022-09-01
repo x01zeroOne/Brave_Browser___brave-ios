@@ -53,6 +53,16 @@ public class PinningCertificateEvaluator: NSObject, URLSessionDelegate {
     // Certificate pinning
     if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust {
       if let serverTrust = challenge.protectionSpace.serverTrust {
+        func ensureGlobal(_ block: @escaping () -> () -> Void) {
+          if Thread.current.isMainThread {
+            DispatchQueue.global(qos: .userInitiated).async {
+              block()()
+            }
+          } else {
+            block()()
+          }
+        }
+        
         do {
           let host = challenge.protectionSpace.host
           if ExcludedPinningHostUrls.urls.contains(host) {
@@ -64,8 +74,16 @@ public class PinningCertificateEvaluator: NSObject, URLSessionDelegate {
             throw error(reason: "Host not specified for pinning: \(host)")
           }
 
-          try evaluate(serverTrust, forHost: host)
-          return completionHandler(.useCredential, URLCredential(trust: serverTrust))
+          return ensureGlobal {
+            do {
+              try self.evaluate(serverTrust, forHost: host)
+              return { completionHandler(.useCredential, URLCredential(trust: serverTrust)) }
+            } catch {
+              log.error(error)
+              self.fatalErrorInDebugModeIfPinningFailed()
+              return { completionHandler(.cancelAuthenticationChallenge, nil) }
+            }
+          }
         } catch {
           log.error(error)
           fatalErrorInDebugModeIfPinningFailed()

@@ -55,6 +55,8 @@
 		CA0391F9271E143F000EB13C /* FavoritesWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA0391F4271E143F000EB13C /* FavoritesWidget.swift */; };
 		CA0391FB271E143F000EB13C /* StatsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA0391F6271E143F000EB13C /* StatsWidget.swift */; };
 		CA0391FC271E143F000EB13C /* SingleStatWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA0391F7271E143F000EB13C /* SingleStatWidget.swift */; };
+		CA7F648228C148A000784DD7 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA7F648128C148A000784DD7 /* AppState.swift */; };
+		CA7F648428C148B200784DD7 /* BrowserState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA7F648328C148B200784DD7 /* BrowserState.swift */; };
 		CA8B4AF0276A8339002120F7 /* BraveWidgetsExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = CA0391B2271E1023000EB13C /* BraveWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CAADEFE026E2707F0020DC4C /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAADEFDF26E2707F0020DC4C /* SceneDelegate.swift */; };
 		CAAE653D287C9FCF00FA44A3 /* CPTemplateApplicationSceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAAE653C287C9FCF00FA44A3 /* CPTemplateApplicationSceneDelegate.swift */; };
@@ -313,6 +315,8 @@
 		CA0391F4271E143F000EB13C /* FavoritesWidget.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FavoritesWidget.swift; sourceTree = "<group>"; };
 		CA0391F6271E143F000EB13C /* StatsWidget.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatsWidget.swift; sourceTree = "<group>"; };
 		CA0391F7271E143F000EB13C /* SingleStatWidget.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SingleStatWidget.swift; sourceTree = "<group>"; };
+		CA7F648128C148A000784DD7 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		CA7F648328C148B200784DD7 /* BrowserState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserState.swift; sourceTree = "<group>"; };
 		CAADEFDF26E2707F0020DC4C /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		CAAE653C287C9FCF00FA44A3 /* CPTemplateApplicationSceneDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CPTemplateApplicationSceneDelegate.swift; sourceTree = "<group>"; };
 		E6231C001B90A44F005ABB0D /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
@@ -449,6 +453,7 @@
 		270ECFC9283824F00089B8B7 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
+				CA7F648028C1489100784DD7 /* States */,
 				27D67619282DA10700BCE16E /* Icons.xcassets */,
 				F84B22431A09165600AAB793 /* Info.plist */,
 				27FA21902838018E00FA2C45 /* InfoPlist.strings */,
@@ -579,6 +584,15 @@
 				CA0391DC271E12F7000EB13C /* WidgetRelease.entitlements */,
 			);
 			path = Entitlements;
+			sourceTree = "<group>";
+		};
+		CA7F648028C1489100784DD7 /* States */ = {
+			isa = PBXGroup;
+			children = (
+				CA7F648128C148A000784DD7 /* AppState.swift */,
+				CA7F648328C148B200784DD7 /* BrowserState.swift */,
+			);
+			path = States;
 			sourceTree = "<group>";
 		};
 		E652F6F91BF66A79007FFDD6 /* Delegates */ = {
@@ -1022,8 +1036,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				F84B22041A0910F600AAB793 /* AppDelegate.swift in Sources */,
+				CA7F648228C148A000784DD7 /* AppState.swift in Sources */,
 				27BEDCCC28AD37CE0073425E /* BraveWidgets.intentdefinition in Sources */,
 				CAADEFE026E2707F0020DC4C /* SceneDelegate.swift in Sources */,
+				CA7F648428C148B200784DD7 /* BrowserState.swift in Sources */,
 				CAAE653D287C9FCF00FA44A3 /* CPTemplateApplicationSceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

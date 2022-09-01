@@ -2270,6 +2270,11 @@ extension BrowserViewController: TabsBarViewControllerDelegate {
     // The actions are carried to menu actions for Tab-Tray Button
   }
   
+  func tabsBarDidSelectAddNewWindow(_ isPrivate: Bool) {
+    let activity = NSUserActivity(activityType: "Browser")
+    UIApplication.shared.requestSceneSessionActivation(nil, userActivity: activity, options: nil, errorHandler: nil)
+  }
+  
   func tabsBarDidChangeReaderModeVisibility(_ isHidden: Bool = true) {
     switch topToolbar.locationView.readerModeState {
     case .active:
