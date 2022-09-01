@@ -40,7 +40,6 @@ extension AppDelegate {
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
   var window: UIWindow?
-  var migration: Migration?
   let appVersion = Bundle.main.infoDictionaryString(forKey: "CFBundleShortVersionString")
 
   var receivedURLs: [URL]?
@@ -98,37 +97,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     SDImageCodersManager.shared.addCoder(PrivateCDNImageCoder())
 
-    // Setup Profile
-    let profile = BrowserProfile(localName: "profile")
-    _ = BrowserProfile(localName: "profile")
-    _ = BrowserProfile(localName: "profile")
-
-    // Setup DiskImageStore for Screenshots
-    let diskImageStore = { () -> DiskImageStore? in
-      do {
-        return try DiskImageStore(
-          files: profile.files,
-          namespace: "TabManagerScreenshots",
-          quality: UIConstants.screenshotQuality)
-      } catch {
-        log.error("Failed to create an image store for files: \(profile.files) and namespace: \"TabManagerScreenshots\": \(error.localizedDescription)")
-        assertionFailure()
-      }
-      return nil
-    }()
+    // Setup BrowserState
+    let browserState = BrowserState()
 
     // Setup Scene Info
     sceneInfo = SceneInfoModel(
-      profile: profile,
-      diskImageStore: diskImageStore,
-      migration: migration)
+      profile: browserState.profile,
+      diskImageStore: browserState.diskImageStore,
+      migration: AppState.shared.migration)
 
     // Perform migrations
-    let profilePrefix = profile.prefs.getBranchPrefix()
-    migration?.launchMigrations(keyPrefix: profilePrefix, profile: profile)
+    let profilePrefix = browserState.profile.prefs.getBranchPrefix()
+    AppState.shared.migration?.launchMigrations(keyPrefix: profilePrefix, profile: browserState.profile)
 
     // Setup GCD-WebServer
-    setUpWebServer(profile)
+    setUpWebServer(browserState.profile)
 
     // Temporary fix for Bug 1390871 - NSInvalidArgumentException: -[WKContentView menuHelperFindInPage]: unrecognized selector
     if let clazz = NSClassFromString("WKCont" + "ent" + "View"), let swizzledMethod = class_getInstanceMethod(TabWebViewMenuHelper.self, #selector(TabWebViewMenuHelper.swizzledMenuHelperFindInPage)) {
