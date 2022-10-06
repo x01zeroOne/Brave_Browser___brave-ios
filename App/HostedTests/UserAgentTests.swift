@@ -31,8 +31,8 @@ class UserAgentTests: XCTestCase {
   }
 
   // Simple test to make sure the WKWebView UA matches the expected FxiOS pattern.
-  func testBraveWebViewUserAgentOnPhone() {
-    if UIDevice.current.userInterfaceIdiom != .phone { return }
+  func testBraveWebViewUserAgentOnPhone() throws {
+    try XCTSkipIf(UIDevice.current.userInterfaceIdiom != .phone, "Must be run on an iPhone")
 
     XCTAssertTrue(mobileUARegex(UserAgent.mobile), "User agent computes correctly.")
 
@@ -88,12 +88,8 @@ class UserAgentTests: XCTestCase {
 
   // MARK: iPad only tests - must run on iPad
 
-  func testDesktopUserAgent() {
-    // Must run on iPad iOS 13+
-    if UIDevice.current.userInterfaceIdiom != .pad
-      || ProcessInfo().operatingSystemVersion.majorVersion < 13 {
-      return
-    }
+  func testDesktopUserAgent() throws {
+    try XCTSkipIf(UIDevice.current.userInterfaceIdiom != .pad, "Must be run on an iPad")
 
     XCTAssertTrue(desktopUARegex(UserAgent.desktop), "User agent computes correctly.")
 
@@ -111,13 +107,9 @@ class UserAgentTests: XCTestCase {
     waitForExpectations(timeout: 60, handler: nil)
   }
 
-  func testIpadMobileUserAgent() {
-    // Must run on iPad iOS 13+
-    if UIDevice.current.userInterfaceIdiom != .pad
-      || ProcessInfo().operatingSystemVersion.majorVersion < 13 {
-      return
-    }
-
+  func testIpadMobileUserAgent() throws {
+    try XCTSkipIf(UIDevice.current.userInterfaceIdiom != .pad, "Must be run on an iPad")
+    
     Preferences.General.alwaysRequestDesktopSite.value = false
 
     XCTAssertTrue(mobileUARegex(UserAgent.mobile), "User agent computes correctly.")

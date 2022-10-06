@@ -23,6 +23,13 @@
         "identifier" : "ClientTests",
         "name" : "ClientTests"
       }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Client.xcodeproj",
+        "identifier" : "274B602128EF78160050E22B",
+        "name" : "HostedTests"
+      }
     }
   ],
   "version" : 1
