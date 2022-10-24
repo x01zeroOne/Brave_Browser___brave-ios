@@ -387,7 +387,7 @@ let package = Package(
         .copy("blocking-summary-test.json"),
       ]
     ),
-    .target(name: "Strings", path: "App/l10n", exclude: ["tools", "Resources/Info.plist", "README.md"]),
+    .target(name: "Strings"),
     .target(name: "RuntimeWarnings"),
     .plugin(name: "IntentBuilderPlugin", capability: .buildTool()),
     .plugin(name: "CurrentBundleGenPlugin", capability: .buildTool()),
