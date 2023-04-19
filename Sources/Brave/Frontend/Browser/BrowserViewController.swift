@@ -610,8 +610,6 @@ public class BrowserViewController: UIViewController {
     // Revised Review Handling
     AppReviewManager.shared.handleAppReview(for: .revisedCrossPlatform, using: self)
     recordAccessibilityDisplayZoomEnabledP3A()
-    recordAccessibilityPhysicalKeyboardUsageP3A()
-    recordAccessibilityPhysicalMouseUsageP3A()
     recordAccessibilityDocumentsDirectorySizeP3A()
   }
 
