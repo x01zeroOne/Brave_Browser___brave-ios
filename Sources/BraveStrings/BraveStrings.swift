@@ -1833,7 +1833,7 @@ extension Strings {
   public struct PlaylistFolders {
     public static let playlistSavedFolderTitle =
       NSLocalizedString("playlistFolders.savedFolderTitle", tableName: "BraveShared", bundle: .module,
-        value: "Saved",
+        value: "Play Later",
         comment: "The title of the default playlist folder")
 
     public static let playlistUntitledFolderTitle =
