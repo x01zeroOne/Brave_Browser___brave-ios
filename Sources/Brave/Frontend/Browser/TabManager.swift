@@ -417,7 +417,14 @@ class TabManager: NSObject {
     // When bulk adding tabs don't notify delegates until we are done
     self.isRestoring = true
     let tabs = urls.map {
-      self.addTab(URLRequest(url: $0), flushToDisk: false, zombie: true, isPrivate: isPrivate)
+      let tab = self.addTab(URLRequest(url: $0),
+                            flushToDisk: false,
+                            zombie: true,
+                            isPrivate: isPrivate)
+      tab.lastTitle = $0.absoluteDisplayString
+      tab.url = $0
+      tab.favicon = FaviconFetcher.getIconFromCache(for: $0) ?? Favicon.default
+      return tab
     }
     
     // Load at most X of the most recent tabs
@@ -429,7 +436,6 @@ class TabManager: NSObject {
       let url = urls[index]
       tab.createWebview()
       tab.loadRequest(URLRequest(url: url))
-      tab.url = url
     }
     
     // Select the most recent.
@@ -487,7 +493,7 @@ class TabManager: NSObject {
     if !isPrivate {
       SessionTab.createIfNeeded(tabId: tab.id,
                                 title: Strings.newTab,
-                                tabURL: TabManager.ntpInteralURL)
+                                tabURL: request?.url ?? TabManager.ntpInteralURL)
       
       if let (provider, js) = makeWalletEthProvider?(tab) {
         let providerJS = """
@@ -584,7 +590,7 @@ class TabManager: NSObject {
     if PrivateBrowsingManager.shared.isPrivateBrowsing { return }
     SessionTab.updateAll(tabs: tabs(withType: .regular).compactMap({
       if let sessionData = $0.webView?.sessionData {
-        return ($0.id, sessionData, $0.title, $0.webView?.url ?? $0.url ?? TabManager.ntpInteralURL)
+        return ($0.id, sessionData, $0.title, $0.url ?? TabManager.ntpInteralURL)
       }
       return nil
     }))
@@ -950,18 +956,43 @@ class TabManager: NSObject {
   func restoreTab(_ tab: Tab) {
     guard let webView = tab.webView else { return }
     guard let sessionTab = SessionTab.from(tabId: tab.id) else {
-      // Restore Tab with its Last-Request
+      
+      // Restore Tab with its Last-Request URL
       tab.navigationDelegate = navDelegate
-      tab.restore(webView, restorationData: nil)
+      
+      var sessionData: (String, URLRequest)?
+      
+      if let tabURL = tab.url {
+        let request = InternalURL.isValid(url: tabURL) ?
+                        PrivilegedRequest(url: tabURL) as URLRequest :
+                        URLRequest(url: tabURL)
+        
+        sessionData = (tab.lastTitle ?? tabURL.absoluteDisplayString, request)
+      }
+      
+      tab.restore(webView,
+                  requestRestorationData: sessionData)
+      return
+    }
+    
+    // Tab was created with no active webview session data.
+    // Restore tab data from Core-Data URL, and configure it.
+    if sessionTab.interactionState.isEmpty {
+      tab.navigationDelegate = navDelegate
+
+      let request = InternalURL.isValid(url: sessionTab.url) ?
+                      PrivilegedRequest(url: sessionTab.url) as URLRequest :
+                      URLRequest(url: sessionTab.url)
+      
+      tab.restore(webView,
+                  requestRestorationData: (sessionTab.url.absoluteDisplayString, request))
       return
     }
 
-    // Tab was created with no active webview or session data.
-    // Restore tab data from CoreData if possible, and configure it.
+    // Restore tab data from Core-Data, and configure it.
     tab.navigationDelegate = navDelegate
     tab.restore(webView,
-                restorationData: sessionTab.interactionState.isEmpty ? nil :
-                  (sessionTab.title, sessionTab.interactionState))
+                restorationData: (sessionTab.title, sessionTab.interactionState))
   }
 
   /// Restores all tabs.
