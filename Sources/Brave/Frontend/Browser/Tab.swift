@@ -561,6 +561,9 @@ class Tab: NSObject {
       }
 
       return webView.load(request)
+    } else {
+      lastRequest = request
+      sslPinningError = nil
     }
     return nil
   }
