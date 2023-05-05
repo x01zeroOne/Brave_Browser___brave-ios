@@ -139,21 +139,33 @@ private struct CreateWalletView: View {
         .background(
           WalletPromptView(
             isPresented: $isShowingBiometricsPrompt,
-            buttonTitle: Strings.Wallet.biometricsSetupEnableButtonTitle,
-            action: { enabled, navController in
-              // Store password in keychain
-              if enabled, case let status = keyringStore.storePasswordInKeychain(password),
-                 status != errSecSuccess {
-                let isPublic = AppConstants.buildChannel.isPublic
-                let alert = UIAlertController(
-                  title: Strings.Wallet.biometricsSetupErrorTitle,
-                  message: Strings.Wallet.biometricsSetupErrorMessage + (isPublic ? "" : " (\(status))"),
-                  preferredStyle: .alert
+            primaryButton: .init(
+              title: Strings.Wallet.biometricsSetupEnableButtonTitle,
+              action: { navController in
+                // Store password in keychain
+                if case let status = keyringStore.storePasswordInKeychain(password),
+                   status != errSecSuccess {
+                  let isPublic = AppConstants.buildChannel.isPublic
+                  let alert = UIAlertController(
+                    title: Strings.Wallet.biometricsSetupErrorTitle,
+                    message: Strings.Wallet.biometricsSetupErrorMessage + (isPublic ? "" : " (\(status))"),
+                    preferredStyle: .alert
+                  )
+                  alert.addAction(.init(title: Strings.OKString, style: .default, handler: nil))
+                  navController?.presentedViewController?.present(alert, animated: true)
+                }
+                
+                let controller = UIHostingController(
+                  rootView: BackupWalletView(
+                    password: password,
+                    keyringStore: keyringStore
+                  )
                 )
-                alert.addAction(.init(title: Strings.OKString, style: .default, handler: nil))
-                navController?.presentedViewController?.present(alert, animated: true)
-                return false
+                navController?.pushViewController(controller, animated: true)
+                isShowingBiometricsPrompt = false
               }
+            ),
+            dismissAction: { navController in
               let controller = UIHostingController(
                 rootView: BackupWalletView(
                   password: password,
@@ -161,7 +173,7 @@ private struct CreateWalletView: View {
                 )
               )
               navController?.pushViewController(controller, animated: true)
-              return true
+              isShowingBiometricsPrompt = false
             },
             content: {
               VStack {
